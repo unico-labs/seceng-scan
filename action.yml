@@ -1,0 +1,88 @@
+name: 'SAST Action'
+description: 'SAST scan.'
+author: 'EngSec team'
+inputs:
+  repo_private:
+    required: true
+    default: ${{ github.event.repository.private }}
+    description: 'Check if a repository is public or not'
+  base_uri:
+    required: true
+    description: 'Provide the SAST URL'
+  sast_tenant:
+    required: true
+    description: 'Provide the Tenant for SAST URL'
+  sast_client_id:
+    required: true
+    description: 'Client ID for SAST authentication'
+  sast_client_secret:
+    required: true
+    description: 'Secret key for SAST authentication'
+  project_name:
+    required: false
+    default: ${{ github.repository }}
+    description: 'Select a Checkmarx Project Name'
+  branch:
+    required: false
+    default: ${{ github.head_ref || github.ref }}
+    description: 'Branch name'
+  github_token:
+    required: false
+    default: ${{ github.token }}
+    description: 'GitHub API Token'
+  additional_params:
+    required: false
+    default: ''
+    description: 'Additional parameters for SAST scan'
+  repo_name:
+    required: false
+    default:  ${{ github.event.repository.name }}
+    description: "Repository name for PR decoration"
+  namespace:
+    required: false
+    default: ${{ github.repository_owner }}
+    description: "Organization name to create the Pr comment"
+  pr_number:
+    required: false
+    default: ${{ github.event.number }}
+    description: "Pr Number of the pull request that needs the decoration"
+outputs: 
+  cxcli:
+    description: output from cli
+  cxScanID:
+    description: scan ID output from cli
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.base_uri }}
+    - ${{ inputs.sast_tenant }}
+    - ${{ inputs.sast_client_id }}
+    - ${{ inputs.sast_client_secret }}
+    - ${{ inputs.github_token }}
+    - ${{ inputs.project_name }}
+    - ${{ inputs.additional_params }}
+    - ${{ inputs.repo_name }}
+    - ${{ inputs.namespace }}
+    - ${{ inputs.pr_number }}
+  entrypoint: '/app/entrypoint.sh'
+  post-if: cancelled()
+  post-entrypoint: '/app/cleanup.sh'
+
+  env:
+    sast_BASE_URI: "${{ inputs.base_uri }}"
+    sast_TENANT: ${{ inputs.sast_tenant }}
+    sast_CLIENT_ID: ${{ inputs.sast_client_id }}
+    sast_CLIENT_SECRET: ${{ inputs.sast_client_secret }}
+    GITHUB_TOKEN: ${{ inputs.github_token }}
+    BRANCH: ${{ inputs.branch }}
+    PROJECT_NAME: ${{ inputs.project_name }}
+    ADDITIONAL_PARAMS: ${{ inputs.additional_params }}
+    REPO_NAME: ${{ inputs.repo_name }}
+    NAMESPACE: ${{ inputs.namespace }}
+    PR_NUMBER: ${{ inputs.pr_number }}
+    REPO_PRIVATE: ${{ inputs.repo_private }}
+
+branding:
+  icon: 'check'
+  color: 'green'
